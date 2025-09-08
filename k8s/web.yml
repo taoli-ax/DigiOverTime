@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: hellotolle/digiovertime:latest # CI/CD will replace this tag
+          image: hellotolle/digiovertime:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
