@@ -27,8 +27,8 @@ spec:
     spec:
       containers:
         - name: web
-          image: hellotolle/digiovertime:211cffc00372dff1d56df70d192570d5f78a4d7b
-          imagePullPolicy: IfNotPresent
+          image: hellotolle/digiovertime:latest # CI/CD will replace this tag
+          imagePullPolicy: Always # 确保每次都拉取最新的镜像
           ports:
             - containerPort: 8000
           env:

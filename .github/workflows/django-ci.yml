@@ -10,7 +10,7 @@ on:
 jobs:
   test:
     name: Run Tests against MySQL
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     # 使用服务容器来启动一个临时的 MySQL 数据库
     services:
       mysql:
@@ -49,6 +49,8 @@ jobs:
           python manage.py test
         env:
           # 覆盖 settings.py 中的默认值，以连接到 CI 的数据库
+          # Django 即使在测试时也需要一个 SECRET_KEY
+          SECRET_KEY: 'a-dummy-key-for-ci-testing'
           DJANGO_DB_HOST: 127.0.0.1
           DJANGO_DB_NAME: 'test_db'
           DJANGO_DB_USER: 'root'
