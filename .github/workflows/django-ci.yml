@@ -1,4 +1,4 @@
-name: Django CI
+name: Django CI/CD with GitHub Actions
 on:
   push:
     branches:
@@ -8,15 +8,38 @@ on:
       - main
 
 jobs:
-  build:
+  test:
+    name: Run Tests against MySQL
     runs-on: ubuntu-22.04
+    # 使用服务容器来启动一个临时的 MySQL 数据库
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: 'testpassword'
+          MYSQL_DATABASE: 'test_db'
+        ports:
+          - 3306:3306
+        # 等待数据库健康检查通过
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
     steps:
       - name: checkout repository
         uses: actions/checkout@v4
+
       - name: setup python
         uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-      - name: install dependencies
+      - name: Install System Dependencies for mysqlclient
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends pkg-config default-libmysqlclient-dev build-essential gcc
+
+      - name: install python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
@@ -24,3 +47,54 @@ jobs:
       - name: run tests
         run: |
           python manage.py test
+        env:
+          # 覆盖 settings.py 中的默认值，以连接到 CI 的数据库
+          DB_HOST: 127.0.0.1
+          DB_NAME: 'test_db'
+          DB_USER: 'root'
+          DB_PASSWORD: 'testpassword'
+
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: test # 确保在测试通过后才运行
+    if: github.ref == 'refs/heads/main' # 仅在合并到 main 分支时运行
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: hellotolle/digiovertime:${{ github.sha }} # 使用 Git SHA 作为唯一的镜像标签
+
+  update-manifest:
+    name: Update Kubernetes Manifest
+    runs-on: ubuntu-latest
+    needs: build-and-push # 确保在镜像推送成功后才运行
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Update image tag in web.yml
+        run: |
+          # 使用 sed 命令来替换 k8s/web.yml 文件中的 image 标签
+          sed -i "s|image: hellotolle/digiovertime:.*|image: hellotolle/digiovertime:${{ github.sha }}|g" k8s/web.yml
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add k8s/web.yml
+          git commit -m "CI: Update image tag to ${{ github.sha }}"
+          git push

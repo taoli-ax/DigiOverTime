@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  type: NodePort # 在本地测试时，使用 NodePort 可以在外部访问
+  ports:
+    - port: 8000
+      targetPort: 8000
+      nodePort: 30001 # 你可以通过 localhost:30001 访问
+  selector:
+    app: web
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-deployment
+spec:
+  replicas: 2 # 让我们运行 2 个应用实例
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: web
+          image: hellotolle/digiovertime:latest # **你需要先构建镜像并推送到 Docker Hub**
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: SECRET_KEY
+              value: "a-very-strong-production-secret-key"
+            - name: DEBUG
+              value: "0"
+            - name: ALLOWED_HOSTS
+              value: "*" # 在生产中应设为你的域名
+            # --- Start of Added Block ---
+            # 将数据库连接信息作为环境变量注入
+            # 这与你的 settings.py 中的硬编码值相匹配
+            - name: DB_HOST
+              value: "db" # 'db' 是 database.yaml 中 Service 的名字
+            - name: DB_NAME
+              value: "digiovertime"
+            - name: DB_USER
+              value: "django_user"
+            - name: DB_PASSWORD
+              value: "djangopassword"
+            # --- End of Added Block ---
