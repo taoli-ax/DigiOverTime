@@ -27,6 +27,13 @@ services:
       - "8000:8000"
     depends_on: # 确保 web 服务在 db 服务启动之后再启动
       - db
+    environment:
+      - DJANGO_DB_HOST=db
+      - DJANGO_DB_NAME=digiovertime
+      - DJANGO_DB_USER=django_user
+      - DJANGO_DB_PASSWORD=djangopassword
+      - DJANGO_DB_PORT=3306
+      - DEBUG=1
 
 volumes:
   mysql_data:

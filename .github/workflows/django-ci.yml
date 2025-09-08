@@ -49,10 +49,11 @@ jobs:
           python manage.py test
         env:
           # 覆盖 settings.py 中的默认值，以连接到 CI 的数据库
-          DB_HOST: 127.0.0.1
-          DB_NAME: 'test_db'
-          DB_USER: 'root'
-          DB_PASSWORD: 'testpassword'
+          DJANGO_DB_HOST: 127.0.0.1
+          DJANGO_DB_NAME: 'test_db'
+          DJANGO_DB_USER: 'root'
+          DJANGO_DB_PASSWORD: 'testpassword'
+          DJANGO_DB_PORT: '3306'
 
   build-and-push:
     name: Build and Push Docker Image

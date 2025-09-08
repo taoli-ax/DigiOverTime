@@ -41,12 +41,14 @@ spec:
             # --- Start of Added Block ---
             # 将数据库连接信息作为环境变量注入
             # 这与你的 settings.py 中的硬编码值相匹配
-            - name: DB_HOST
+            - name: DJANGO_DB_HOST
               value: "db" # 'db' 是 database.yaml 中 Service 的名字
-            - name: DB_NAME
+            - name: DJANGO_DB_NAME
               value: "digiovertime"
-            - name: DB_USER
+            - name: DJANGO_DB_USER
               value: "django_user"
-            - name: DB_PASSWORD
+            - name: DJANGO_DB_PASSWORD
               value: "djangopassword"
+            - name: DJANGO_DB_PORT
+              value: "3306"
             # --- End of Added Block ---
