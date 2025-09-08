@@ -1,27 +1,38 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  # 每次运行时，建议使用不同的名字，或者配置 Job 自动清理
-  name: django-pre-sync-migrate
+  # 使用 generateName 会让 Kubernetes 每次都创建一个带随机后缀的新 Job，避免冲突
+  generateName: django-migrate-job-
   annotations:
     # 这是一个 Argo CD 的钩子，表示在同步（部署）之前运行
     argocd.argoproj.io/hook: PreSync
-    # 确保在运行失败后，Argo CD 会删除这个失败的 Job
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    # 无论成功还是失败，都在运行后删除这个 Job，保持集群干净
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
 spec:
   template:
     spec:
-      # 使用与你的 web 应用完全相同的容器定义
+      # --- Start of World-Class Practice: Init Container ---
+      # 这个容器会先于主容器运行，它的任务是等待数据库准备就绪
+      initContainers:
+        - name: wait-for-db
+          image: busybox:1.36 # 一个极小的工具镜像
+          # 循环执行 `nc` 命令，尝试连接 db 服务的 3306 端口，直到成功为止
+          command: ['sh', '-c', 'until nc -z -w 2 db 3306; do echo "Waiting for database..."; sleep 2; done;']
+      # --- End of Init Container ---
+
       containers:
         - name: django-migrate
-          # **重要**：使用与你 web.yml 中完全相同的镜像地址和标签
-          image: hellotolle/digiovertime:cc418927c8079aa6058bdcc822acc1498790cd23
+          # 使用与 web.yml 中完全相同的镜像
+          image: hellotolle/digiovertime:db322b35f41d5c193a135a9e6cfe268bbeefcbd3
           # Job 的核心：覆盖 Dockerfile 的 CMD，转而执行 migrate 命令
           command: ["python", "manage.py", "migrate"]
           # 注入与 web 应用完全相同的环境变量，以便连接到数据库
           env:
             - name: SECRET_KEY
-              value: "a-very-strong-production-secret-key"
+              valueFrom:
+                secretKeyRef:
+                  name: django-secrets
+                  key: SECRET_KEY
             - name: DEBUG
               value: "0"
             - name: ALLOWED_HOSTS
@@ -32,8 +43,11 @@ spec:
               value: "digiovertime"
             - name: DJANGO_DB_USER
               value: "django_user"
-            - name: DJANGO_DB_PASSWORD
-              value: "djangopassword"
+            - name: DJANGO_DB_PASSWORD # **已修正：从 Secret 中安全地读取密码**
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: MYSQL_PASSWORD
             - name: DJANGO_DB_PORT
               value: "3306"
       # 确保 Job 在完成后不会自动重启
