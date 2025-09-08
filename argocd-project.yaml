@@ -1,0 +1,23 @@
+    # argocd-project.yaml
+    apiVersion: argoproj.io/v1alpha1
+    kind: AppProject
+    metadata:
+      name: digiovertime-project
+      namespace: argocd
+    spec:
+      description: Project for the DigiOverTime application
+
+      # 允许从哪个 Git 仓库拉取配置
+      sourceRepos:
+      - 'https://github.com/taoli-ax/DigiOverTime.git' # **重要：请替换为你的仓库地址**
+
+      # 允许部署到哪个目标
+      destinations:
+      - namespace: default
+        server: https://kubernetes.default.svc
+
+      # 允许部署哪些类型的资源
+      clusterResourceWhitelist: []
+      namespaceResourceWhitelist:
+      - group: '*'
+        kind: '*'
