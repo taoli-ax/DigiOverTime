@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: hellotolle/digiovertime:d795c498a41c0e10aae980f133f275d00382dd58
+          image: hellotolle/digiovertime:3cce40919dd5c670a24abff1afb7e19d31a81502
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
