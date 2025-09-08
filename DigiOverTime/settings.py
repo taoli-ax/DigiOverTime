@@ -21,12 +21,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-y)xc*$#o9i@uq&=$lf!23d&^1u$_^2dg6qyba@hxvf+_ekt4g8'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-y)xc*$#o9i@uq&=$lf!23d&^1u$_^2dg6qyba@hxvf+_ekt4g8')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', '0') == '1'
 
-ALLOWED_HOSTS = ['*','0.0.0.0']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+
+# --- Start of Production Security Settings ---
+# 在 K8s 等反向代理环境下，告诉 Django 信任来自代理的 HTTPS 头信息
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', '0') == '1'
+# --- End of Production Security Settings ---
 
 
 # Application definition
