@@ -29,6 +29,9 @@ RUN pip install -r requirements.txt
 # 复制所有项目代码到工作目录
 COPY . .
 
+# 运行 collectstatic 命令来收集所有静态文件
+RUN python manage.py collectstatic --noinput
+
 # 暴露容器的 8000 端口，以便外部可以访问
 EXPOSE 8000
 
