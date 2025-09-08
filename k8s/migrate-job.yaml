@@ -23,7 +23,7 @@ spec:
       containers:
         - name: django-migrate
           # 使用与 web.yml 中完全相同的镜像
-          image: hellotolle/digiovertime:latest
+          image: hellotolle/digiovertime:211cffc00372dff1d56df70d192570d5f78a4d7b
           # Job 的核心：覆盖 Dockerfile 的 CMD，转而执行 migrate 命令
           command: ["python", "manage.py", "migrate"]
           # 注入与 web 应用完全相同的环境变量，以便连接到数据库
