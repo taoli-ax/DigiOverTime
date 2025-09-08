@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: hellotolle/digiovertime:latest # **你需要先构建镜像并推送到 Docker Hub**
+          image: hellotolle/digiovertime:0249c1c482cdb0d747627443af6dab9d7bd3c816
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
