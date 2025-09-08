@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  # 每次运行时，建议使用不同的名字，或者配置 Job 自动清理
+  name: django-migrate-job
+spec:
+  template:
+    spec:
+      # 使用与你的 web 应用完全相同的容器定义
+      containers:
+        - name: django-migrate
+          # **重要**：使用与你 web.yml 中完全相同的镜像地址和标签
+          image: hellotolle/digiovertime:cc418927c8079aa6058bdcc822acc1498790cd23
+          # Job 的核心：覆盖 Dockerfile 的 CMD，转而执行 migrate 命令
+          command: ["python", "manage.py", "migrate"]
+          # 注入与 web 应用完全相同的环境变量，以便连接到数据库
+          env:
+            - name: SECRET_KEY
+              value: "a-very-strong-production-secret-key"
+            - name: DEBUG
+              value: "0"
+            - name: ALLOWED_HOSTS
+              value: "*"
+            - name: DJANGO_DB_HOST
+              value: "db"
+            - name: DJANGO_DB_NAME
+              value: "digiovertime"
+            - name: DJANGO_DB_USER
+              value: "django_user"
+            - name: DJANGO_DB_PASSWORD
+              value: "djangopassword"
+            - name: DJANGO_DB_PORT
+              value: "3306"
+      # 确保 Job 在完成后不会自动重启
+      restartPolicy: Never
+  backoffLimit: 4
